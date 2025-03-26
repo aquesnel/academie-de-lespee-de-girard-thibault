@@ -1,2 +1,29 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# don't manipulate all unspecified files
+* -text
+
+
+# Known text file extensions
+
+*.csv text
+*.Dockerfile text
+*.json text
+*.md text
+*.py text
+*.txt text
+*.yaml text
+
+.gitattributes text
+.gitignore text
+LICENSE text
+
+
+# Known binary file extensions
+
+*.h5 binary
+*.png binary
+
+
+# Known specific files
+
+# all json files in the models directory are effectively binary since they are machine generated and not manually created.
+ocr4all-models/**/*.json binary

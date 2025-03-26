@@ -1,0 +1,11 @@
+services:
+  ocr4all:
+    image: uniwuezpd/ocr4all # "latest" tag on 2025-02-16 05fa3e29361d52bba824b100320751f120d052eea780e8731e6e0546f01c22d7
+    ports:
+      - 127.0.0.1:1476:8080
+    volumes:
+      - "../ocr4all-data:/var/ocr4all/data/Thibault"
+      - "../ocr4all-models:/var/ocr4all/models/custom/Thibault"
+      - "../scripts:/var/ocr4all/Thibault-scripts"
+      # - "../ocr4all-models/segmentation/blla-thibault.mlmodel:/usr/local/lib/python3.7/dist-packages/kraken/blla.mlmodel"
+    restart: "no"

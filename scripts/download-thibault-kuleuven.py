@@ -157,7 +157,7 @@ def main(argv=None):
         parser = ArgumentParser(description="", formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument(dest="csv_file_path", action="store", help="the CSV file to get the file names from")
         parser.add_argument("-o", "--output-prefix", dest="output_prefix", action="store", default='.', help="The destination directory and file name prefix for the downloaded files [default: %(default)s]")
-        parser.add_argument("-n", "--dry-run", dest="dry_run", action="store_true", default=False, help="skip all renaming actions [default: %(default)s]")
+        parser.add_argument("-n", "--dry-run", dest="dry_run", action="store_true", default=False, help="skip all write and network actions [default: %(default)s]")
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
 
         args = parser.parse_args()

@@ -64,7 +64,7 @@ def main(argv=None):
         parser.add_argument("-g", "--grey_scale", dest="grey_scale", action="store_true", default=False, help="Output the image as grey scale [default: %(default)s]")
         parser.add_argument("-b", "--bit_depth", dest="bit_depth", action="store", default='8', help="Output the image with the given bit depth [default: %(default)s]")
         parser.add_argument("-c", "--compression_level", dest="compression_level", action="store", default='-1', help="Output the image with the given zlib compression level [-1 .. 9]. '-1' means the zlib default compression level. [default: %(default)s]")
-        parser.add_argument("-n", "--dry-run", dest="dry_run", action="store_true", default=False, help="skip all renaming actions [default: %(default)s]")
+        parser.add_argument("-n", "--dry-run", dest="dry_run", action="store_true", default=False, help="skip all write actions [default: %(default)s]")
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
 
         args = parser.parse_args()

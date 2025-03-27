@@ -1,0 +1,471 @@
+* GOAL Get "Academy of the sword" by Thibault into Project Gutenburg
+** DONE get copyright clearance
+** TODO  make the ebook
+*** DONE get scans of the book
+:PROPERTIES:
+:collapsed: true
+:END:
+**** DONE download scans using Julie's script
+***** #cmd 
+```
+python3 /var/ocr4all/Thibault-scripts/download-thibault-kuleuven.py -v -o /var/ocr4all/data/Thibault/KU-Leuven-raw/ /var/ocr4all/data/Thibault/KU-Leuven-images.csv
+```
+*** DONE initial OCR of book
+:PROPERTIES:
+:collapsed: true
+:END:
+**** DONE download the empty pages from KU Leuven so that I have the whole book
+:PROPERTIES:
+:collapsed: true
+:END:
+***** URLs
+:PROPERTIES:
+:collapsed: true
+:END:
+****** ```
+https://lib.is/iiif/2/FL6805150/full/6773,/0/default.jpg
+
+https://lib.is/iiif/2/FL6805596/full/6893,/0/default.jpg
+```
+****** ```
+https://lib.is/iiif/2/FL6805151/full/7236,/0/default.jpg
+https://lib.is/iiif/2/FL6805152/full/7236,/0/default.jpg
+https://lib.is/iiif/2/FL6805153/full/7236,/0/default.jpg
+
+https://lib.is/iiif/2/FL6805155/full/7236,/0/default.jpg
+```
+***** Missing pages (image number)
+:PROPERTIES:
+:collapsed: true
+:END:
+****** ```
+1
+2
+3
+4
+6
+8
+12
+14
+16
+18
+20
+22
+24
+26
+28
+31
+33
+56
+66
+68
+75
+77
+88
+90
+103
+105
+112
+114
+127
+129
+136
+138
+151
+153
+158
+160
+167
+169
+174
+176
+183
+185
+192
+194
+201
+203
+210
+212
+221
+223
+230
+232
+239
+241
+248
+250
+257
+259
+266
+268
+273
+275
+280
+282
+285
+287
+289
+294
+296
+301
+303
+310
+312
+317
+319
+324
+326
+333
+335
+342
+344
+351
+353
+354
+356
+359
+361
+366
+368
+375
+377
+384
+386
+393
+395
+400
+402
+409
+411
+416
+418
+425
+427
+432
+434
+441
+443
+444
+445
+446
+447
+```
+***** #cmd
+```
+python3 /mnt/c/Users/aquesnel/Dev/Thibault-images/KU-Leuven-raw/download-thibault-kuleuven.py -v -o /mnt/c/Users/aquesnel/Dev/Thibault-images/KU-Leuven-raw/downloads/thibault- /mnt/c/Users/aquesnel/Dev/Thibault-images/KU-Leuven-raw/missing-images.csv
+```
+**** DONE create renamer script that can rename files in batches and fixup the PAGE xml imageFilename attribute
+:PROPERTIES:
+:collapsed: true
+:END:
+***** DONE GOAL: what paths are allowed in the imageFilename attribute of the PAGE XML file format?
+****** DONE change all of the imageFilename attributes to be consistent with just a file name, so that I can then upload the full directory of `data/Thibault/[input|processing|result]` to git
+****** Answer: filename or full path, based on calamari validation
+******* Research
+******** the PAGE XML spec does not specify:
+:PROPERTIES:
+:collapsed: true
+:END:
+********* https://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd
+********* https://www.primaresearch.org/tools/PAGELibraries
+********* ```
+<complexType name="PageType">
+  <attribute name="imageFilename" type="string" use="required">
+    <documentation>
+    	Contains the image file name including the file extension.
+    </documentation>
+  </attribute>
+  ...
+</complexType>
+```
+******** LAREX: The given path from the <Page imageFilename="????"> attribute is not well defined in LAREX, it seems to be that the image file loader will append this imageFilename value to the absolute path for the "mets" root
+:PROPERTIES:
+:collapsed: true
+:END:
+********* code references:
+********** imageFilename read from xml: https://github.com/OCR4all/LAREX/blob/master/src/main/java/de/uniwue/web/io/MetsReader.java#L100
+********** imageFilename transform: https://github.com/OCR4all/LAREX/blob/master/src/main/java/de/uniwue/web/controller/ViewerController.java#L134
+********** "mets" root: https://github.com/OCR4all/LAREX/blob/master/src/main/java/de/uniwue/web/controller/ViewerController.java#L86
+********** image file request handler: https://github.com/OCR4all/LAREX/blob/ce926a697c50b318df62b5ee2fac4c807e441f1b/src/main/java/de/uniwue/web/controller/FileController.java#L108
+********** js image loader: https://github.com/OCR4all/LAREX/blob/master/src/main/webapp/resources/js/viewer/communicator.js#L156
+********** main page js get images: https://github.com/OCR4all/LAREX/blob/master/src/main/webapp/resources/js/viewer/controller.js#L202
+********* LAREX forces the xml file to be in the same directory as the processed image files:
+********** https://github.com/OCR4all/LAREX/blob/68e92dc842f502bc7601c7566257826dce7cd051/src/main/java/de/uniwue/web/controller/ViewerController.java#L135
+********** ```
+request.mimeMap = ""
+request.fileMap = { "0001": [
+    "/var/ocr4all/data/Thibault/processing/0001.bin.png",
+    "/var/ocr4all/data/Thibault/processing/0001.desp.png",
+    "/var/ocr4all/data/Thibault/processing/0001.nrm.png"
+]}
+```
+******** In OCR4all recognition (which uses Calamari), the image paths come from the `pageIds` page names and configured directories
+:PROPERTIES:
+:collapsed: true
+:END:
+********* code references
+********** pageIds sent to frontend:
+*********** config JSP page: https://github.com/OCR4all/OCR4all/blob/master/src/main/java/de/uniwue/controller/RecognitionController.java#L58
+*********** JSP calls backend: https://github.com/OCR4all/OCR4all/blob/master/src/main/webapp/WEB-INF/views/recognition.jsp#L13C42-L13C57
+*********** backend supplies PageIds: https://github.com/OCR4all/OCR4all/blob/master/src/main/java/de/uniwue/controller/RecognitionController.java#L171
+********** pageIds from input directory:
+*********** https://github.com/OCR4all/OCR4all/blob/0.6.1/src/main/java/de/uniwue/helper/RecognitionHelper.java#L364
+*********** https://github.com/OCR4all/OCR4all/blob/master/src/main/java/de/uniwue/helper/GenericHelper.java#L54
+*********** configuration image directories: https://github.com/OCR4all/OCR4all/blob/0.6.1/src/main/java/de/uniwue/config/ProjectConfiguration.java#L161
+********** pageIds from execute request: https://github.com/OCR4all/OCR4all/blob/master/src/main/java/de/uniwue/controller/RecognitionController.java#L79
+********** supply image paths to cli: https://github.com/OCR4all/OCR4all/blob/0.6.1/src/main/java/de/uniwue/helper/RecognitionHelper.java#L288
+******** In Calamari, the imageFilename is only used to validate that it matches the image path that comes from the cli
+:PROPERTIES:
+:collapsed: true
+:END:
+********* code references
+********** get image paths from cli:
+*********** https://github.com/Calamari-OCR/calamari/blob/e766fa6dae35bfda55116aa0b0285156faaf88b8/calamari_ocr/scripts/predict.py#L32
+*********** https://github.com/Calamari-OCR/calamari/blob/7b03ba9af360f1e08ed1421aaf889ae6988597e4/calamari_ocr/ocr/dataset/datareader/pagexml/reader.py#L178
+********** validate image paths: https://github.com/Calamari-OCR/calamari/blob/7b03ba9af360f1e08ed1421aaf889ae6988597e4/calamari_ocr/ocr/dataset/datareader/pagexml/reader.py#L78
+**** DONE use renamer to rename existing files to have all images labelled with their image number
+:PROPERTIES:
+:collapsed: true
+:END:
+***** DONE Remove absolute directories from xml imageFilename attribute because of manual hacks
+:PROPERTIES:
+:collapsed: true
+:END:
+****** #cmd
+```
+cd /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault
+mkdir fixed ; cd processing ; find . -name '*.xml' | xargs -I{} sed 's#<Page imageFilename="\(/var.*/\)*\([^/]*\)"#<Page imageFilename="\2"#g; w ../fixed/{}' {} > /dev/null ; cd ..
+cd fixed ; find . -name '*.xml' | xargs -I{} diff ../processing/{} {} ; cd ..
+```
+***** DONE remove the "bin" suffix from the xml imageFilename attribute since the bin will not be committed to git, and kraken uses just the plain prefix in the xml imageFilename attribute
+****** #cmd
+```
+cd /var/ocr4all/data/Thibault
+mkdir fixed ; cd processing ; find . -name '*.xml' | xargs -I{} sed 's#<Page imageFilename="\(.*\)\.bin\(.*\)"#<Page imageFilename="\1\2"#g; w ../fixed/{}' {} > /dev/null ; cd ..
+cd fixed ; find . -name '*.xml' | xargs -I{} diff ../processing/{} {} ; cd ..
+```
+***** DONE create the csv file for the KU-Leuven-raw directory
+****** DONE get the correct page number for each start of chapter (first page with text)
+:PROPERTIES:
+:collapsed: true
+:END:
+******* Chapter starts (first page with text)
+:PROPERTIES:
+:id: 67e066df-bbae-4fe5-b029-fa4a80294071
+:END:
+******** Book 1
+
+```
+34
+58
+69
+78
+91
+106
+115
+130
+139
+154
+161
+170
+177
+186
+195
+204
+213
+224
+233
+242
+251
+260
+269
+276
+283
+290
+297
+304
+313
+320
+327
+336
+345
+```
+******** Book 2 into: `357`
+******** Book 2
+```
+
+
+362
+369
+378
+387
+396
+403
+412
+419
+428
+435
+439
+```
+***** DONE rename the KU-Leuven images to use the image number
+:PROPERTIES:
+:collapsed: true
+:END:
+****** #cmd
+```
+python3 /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/rename_files_batch.py -n -v /mnt/c/Users/aquesnel/Dev/Thibault-images/KU-Leuven-raw/Thibault-rename-julie-dirs-all-v2.csv
+```
+***** DONE rename ocr4all files to insert missing pages
+****** DONE get the list of missing ocr for pages'
+******* ```
+9
+10
+29
+30
+```
+****** DONE create the csv file for the ocr4all directories to have the file name incremented by 4
+****** DONE rename the ocr4all images to make name space for the missing images
+******* #cmd 
+```
+python3 /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/rename_files_batch.py -n -v /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/Thibault-rename-insert-missing-all.csv
+```
+***** DONE rename the ocr4all images to use the image number
+****** DONE create the csv file for the ocr4all directories to have the file name match the image name
+:LOGBOOK:
+CLOCK: [2025-03-23 Sun 23:20:44]--[2025-03-23 Sun 23:20:52] =>  00:00:08
+:END:
+******* REF: ((67e066df-bbae-4fe5-b029-fa4a80294071))
+****** #cmd
+```
+python3 /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/rename_files_batch.py -n -v /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/Thibault-rename-pageToImageNumbering.csv
+```
+**** DONE create text from images
+:PROPERTIES:
+:collapsed: true
+:END:
+***** DONE use scan tailor to get reasonable sized initial images
+***** DONE use OCR4all to transcribe first 10 pages of text
+***** DONE train OCR model to get ligatures and fancy letters into scan
+***** DONE use OCR4all to get ocr text of all pages after chapter 1
+***** DONE use OCR4all to get an ocr transcript preface of the book
+****** DONE write "renamer" script to get files into the correct format
+:LOGBOOK:
+CLOCK: [2025-03-23 Sun 15:27:50]--[2025-03-23 Sun 15:27:53] =>  00:00:03
+:END:
+****** DONE run scan tailor of the missing pages
+****** DONE rename pages to ocr4all naming convention
+:PROPERTIES:
+:collapsed: true
+:END:
+******* #cmd
+```
+python3 /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/rename_files_batch.py -n -v /mnt/c/Users/aquesnel/Dev/Thibault-images/KU-Leuven-raw/Thibault-rename-julie-to-ocr4all.csv
+```
+******* ocr4all renames all files in the directory when it does a image format conversion, not just the converted files
+******** DONE test having gaps in the ocr4all files name list to see if it's even possible to have ocr4all work on pre-named files
+********* DONE give ocr4all the "thibault-" prefixed names
+:LOGBOOK:
+CLOCK: [2025-03-25 Tue 09:57:24]--[2025-03-25 Tue 10:01:37] =>  00:04:13
+:END:
+********* DONE let ocr4all rename and do file conversions
+********* DONE rename the ocr4all files to use the gapped image numbers
+********** #cmd
+```
+python3 /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/rename_files_batch.py -n -v /mnt/c/Users/aquesnel/Dev/Thibault-images/ocr4all/data/Thibault/Thibault-rename-pageToImageNumbering-missing.csv
+```
+********* DONE load the files in ocr4all
+********* DONE merge all the ocr4all files into the same directory
+********** DONE rename missing files to use image numbering
+********** DONE rename original files to use image numbering
+********** DONE merge directories
+********* ocr4all is fine with having gaps in the file names, as long as the file names meet the naming convention of `####.png`
+******** Do ONE of the following
+********* DONE figure out how to do the file conversion before passing the images to ocr4all
+********** ocr4all uses opencv to do the image conversion
+*********** frontend call: https://github.com/OCR4all/OCR4all/blob/a0a94fb89aae1f60c77286be4e7033a78e961525/src/main/webapp/WEB-INF/views/overview.jsp#L255
+*********** backend api: https://github.com/OCR4all/OCR4all/blob/a0a94fb89aae1f60c77286be4e7033a78e961525/src/main/java/de/uniwue/controller/OverviewController.java#L249
+*********** backend image converter: https://github.com/OCR4all/OCR4all/blob/a0a94fb89aae1f60c77286be4e7033a78e961525/src/main/java/de/uniwue/helper/OverviewHelper.java#L466
+*********** opencv conversion header: https://github.com/opencv/opencv/blob/c72c527bfe8a1a7901fe3eff133fa055cb543f54/modules/imgcodecs/include/opencv2/imgcodecs.hpp#L460
+*********** there is a python binding for opencv: https://pypi.org/project/opencv-python/
+************ basic tutorial: https://docs.opencv.org/4.x/d3/df2/tutorial_py_basic_ops.html
+********** DONE write a script to do the image conversion
+*********** ocr4all has opencv-python installed
+********** DONE test converting a single image
+*********** #cmd
+```
+python3 /var/ocr4all/data/Thibault/convert_to_png.py -n -v /var/ocr4all/data/Thibault/experiment/thibault-005.tif
+python3 /var/ocr4all/data/Thibault/convert_to_png.py -n -v -s 0.20 -g -b 2 -c 9 /var/ocr4all/data/Thibault/experiment/thibault-005.tif
+```
+*********** output:
+```
+# md5sum /var/ocr4all/data/Thibault/experiment/thibault-005.png /var/ocr4all/data/Thibault/input/0005.png
+644cde2fc152a96c200bb75c69dc3f2a  /var/ocr4all/data/Thibault/thibault-005.png
+644cde2fc152a96c200bb75c69dc3f2a  /var/ocr4all/data/Thibault/input/0005.png
+```
+********* CANCELED give ocr4all all of the image files even the blank pages so that the `ocr4all name = image name`
+********* CANCELED let ocr4all have the images in it's name format, and use the renamer to fix up the names after the ocr is done
+****** DONE run OCR on missing pages
+****** DONE manually do first pass proof read
+**** DONE commit initial OCR results to github
+:PROPERTIES:
+:collapsed: true
+:END:
+***** DONE create github repository
+***** DONE create initial directory structure
+***** DONE write the README file with:
+****** DONE overview
+****** DONE pre-requisites
+****** DONE docker
+****** DONE download from KU Leuven
+****** DONE image pre-processing
+****** DONE ocr4all
+****** DONE scripts
+***** DONE add the license to the git repo
+****** DONE choose a license
+:PROPERTIES:
+:collapsed: true
+:END:
+******* Choose one of: https://choosealicense.com/
+:PROPERTIES:
+:collapsed: true
+:END:
+******** CC0 public domain
+********* I have my script code in here, better to choose a code license
+********* the KU Leuven images are public domain, but I've pre-processed them to be ocr ready
+********* the PAGE xml files contain the content of the book, but they are also ocr annotations and ground truth, which is a lot of work
+******** CC-NC-SA-BY
+********* recommended against by the creative commons org for software stuff
+********** https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software
+******** MIT
+********* essentially CC-BY
+******** Apache
+********* MIT + patent stuff
+******* I choose the MIT licsense because it
+******** no modification of redistribution conditions other than attribution
+******** is for software
+******** the result of the work is going into the public domain in project gutenberg
+***** DONE do a code review on all scripts
+***** CANCELED compact the PAGE xml files by simplifying their polygons
+****** CANCELED write script to simplify the polygons
+******* DONE find the code that LAREX uses to simplify the polygons
+******** code refrences
+********* javascript region simplify call https://github.com/OCR4all/LAREX/blob/ce926a697c50b318df62b5ee2fac4c807e441f1b/src/main/webapp/resources/js/viewer/communicator.js#L112C24-L112C48
+********* java region simplify handler: https://github.com/OCR4all/LAREX/blob/68e92dc842f502bc7601c7566257826dce7cd051/src/main/java/de/uniwue/web/controller/ImageProcessingController.java#L94
+********* LAREX call simplify polygon code: https://github.com/OCR4all/LAREX/blob/master/src/main/java/de/uniwue/web/facade/ImageProcessingFacade.java#L156
+********* JTS Topology simplify polygon: https://github.com/locationtech/jts/blob/f36d492e62a941224c41278aa5b8cee9c5124e10/modules/core/src/main/java/org/locationtech/jts/simplify/TopologyPreservingSimplifier.java#L80
+******* CANCELED find if there is a python binding for the JTS Topology library or equivalent package
+***** DONE commit and push to github
+*** TODO get the book into distributed proofreaders as a project
+**** DONE find a project manager
+**** DONE provide the book scans to the project manager
+***** DONE get the required book scan naming scheme
+****** DONE ask for required format
+****** DONE Receive required format
+***** DONE convert the files that I have into the requested naming scheme
+**** TODO provide the book scans as per column scans
+***** TODO run the images through the ScanTailor to make images of each column of text
+***** TODO match up the ocr text with the text from each column
+*****
+***
+**

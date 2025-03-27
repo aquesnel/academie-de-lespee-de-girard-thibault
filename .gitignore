@@ -1,0 +1,5 @@
+# generated image files from the ocr4all-data/input/*.png files
+ocr4all-data/processing/*.png
+
+# generated text files from the ocr4all-data/processing/*.xml files
+ocr4all-data/results/

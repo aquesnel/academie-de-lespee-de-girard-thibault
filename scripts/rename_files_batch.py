@@ -188,7 +188,15 @@ def rename_files(csv_file_path, verbose = False, dry_run = False):
     cache_abs_dirs = {}
     sim_cache_old_removed_abs_dirs = {}
     for abs_dir in set(old_abs_dirs.keys()).union(new_abs_dirs.keys()):
-        cache_abs_dirs[abs_dir] = {entry.name: entry for entry in os.scandir(abs_dir)}
+        scan_dir_result = []
+        if not os.path.exists(abs_dir):
+            make_dir(abs_dir, verbose = verbose, dry_run = dry_run)
+        elif os.path.isdir(abs_dir):
+            scan_dir_result = os.scandir(abs_dir)
+        else:
+            raise ValueError(f'Path {abs_dir} exists and is not a directory.')
+                
+        cache_abs_dirs[abs_dir] = {entry.name: entry for entry in scan_dir_result}
         sim_cache_old_removed_abs_dirs[abs_dir] = set(cache_abs_dirs[abs_dir].keys())
     
     if verbose:
@@ -295,6 +303,16 @@ def rename_files(csv_file_path, verbose = False, dry_run = False):
     for rename_config in renames_by_old_abs_path.values():
         rename_file(rename_config.temp_abs_path(root), rename_config.new_abs_path(root), verbose = verbose, dry_run = dry_run)
 
+def make_dir(abs_dir, verbose = False, dry_run = False):
+            
+    if verbose:
+        if dry_run:
+            dry_run_str = '[Dry-run] ' 
+        else:
+            dry_run_str = ''
+        print(f'{dry_run_str}Creating directory: `{abs_dir}`')
+    if not dry_run:        
+        os.makedirs(abs_dir, exist_ok=True)
 
 def rename_file(old_path, new_path, dry_run, verbose):
     if verbose:

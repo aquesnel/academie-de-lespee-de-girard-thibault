@@ -3,3 +3,7 @@ ocr4all-data/processing/*.png
 
 # generated text files from the ocr4all-data/processing/*.xml files
 ocr4all-data/results/
+
+# temp files
+ocr4all-data/KULeuven-raw/
+ocr4all-data/ScanTailor-input/
